@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% load static %}
+{% block body_class %}dashboard-body{% endblock %}
+{% block content %}
+
+<div class="container-fluid h-100 bg-white" style="height: 100vh !important;background-color: #D6D6D6;">
+    <!-- Navbar -->
+    <div class="d-flex" style="height: 50px;">
+        <ul class="nav mt-1 ms-1 w-100">
+            <li class="nav-item ms-3">
+                <a class="nav-link text-dark active" aria-current="page" href="/">Home</a>
+            </li>
+            <li class="nav-item ms-3">
+                <a class="nav-link text-dark" href="{% url 'logout' %}">Logout</a>
+            </li>
+        </ul>
+    </div>  
+    <div class="row">
+        <div class="col-lg-5">
+            <!-- Image Upload -->
+            <form method="POST" enctype="multipart/form-data" action="{% url 'predict' %}">
+                {% csrf_token %}
+                <div class="row ms-1 mt-1 shadow-lg rounded-3 bg-white text-center p-4">
+                    <h4 class="mb-2 text-black ">Upload an Image or Video</h4>
+                    <p class="text-muted">Choose or drag files here</p>
+            
+                    <!-- Drag & Drop Area -->
+                    <div id="drop-area" class="border border-dashed rounded-3 d-flex flex-column justify-content-center align-items-center"
+                         style="height: 250px; width: 100%; cursor: pointer;">
+                        <input type="file" name="uploaded_file" id="fileInput" accept="image/*,video/*" hidden>
+                        <div id="preview-container" class="h-100 w-100">
+                            <p class="text-black" id="drop-text">Click to upload or drag files here</p>
+                        </div>
+                    </div>
+                    <div class="">
+                        <button type="submit" class="btn btn-dark mt-3">Predict</button>
+                    </div>
+                    
+                </div>
+            </form>
+        </div>
+        <div class="col-lg-7">
+            <!-- Grad-CAM -->
+            <div class="row ms-1 mt-1 me-1 rounded-3 shadow-lg ">
+                <div class="col-lg-6 bg-white rounded-3" >
+                    <div id="mainGradCam" class="ms-3 mt-5 preview border-black border-dotted" style="height: 250px !important; width: 250px !important;">    
+                        {% if grad_cam_images %}
+                            <img src="{{MEDIA_URL}}{{ grad_cam_images.0 }}" id="main-preview" class="h-100 rounded-3 w-100 ">
+                        {% endif %}
+                    </div>
+                    <div class="ms-1 mt-3 mb-3 d-flex rounded-2 mt-2" style="height: 100px !important; width: 300px; overflow-x: auto; white-space: nowrap;">
+                        {% if grad_cam_images %}
+                            {% for image in grad_cam_images %}
+                                <div class="w-25 h-100 ms-1 rounded-2" style="width: 100px; background-color: #D6D6D6; flex: 0 0 auto;">
+                                    <img src="{{ MEDIA_URL }}{{ image }}" class="h-100 w-100 rounded-2 grad-cam-thumbnail" onclick="updatePreview(this)">
+                                </div>
+                            {% endfor %}
+                        {% endif %}     
+                    </div>
+                </div>
+                <div class="col-lg-6 bg-white rounded-3">
+                    <div class="bg-white rounded-circle d-flex align-items-center justify-content-center shadow-lg mt-5 ms-3" style="height: 350px; width: 350px;">
+                        {% if label %}
+                            <h1 class="text-dark">{{label}}-{{confidence}}%</h1> 
+                            <!-- -{{confidence}}% -->
+                        {% endif %} 
+                    </div>
+                </div>
+            </div>    
+        </div>
+    </div>
+    <!-- History Section -->
+    <div class="row ms-1 mt-2 shadow-lg me-1 bg-white rounded-3">
+        <h4 class="text-dark ms-1">Event Logs</h4>
+        <div class="mb-3 w-100 d-flex rounded-2 align-items-center"
+             style="height: 150px !important; overflow-x: auto !important; overflow-y: hidden; white-space: nowrap;">
+            {% for record in history %}
+                <a href="{% url 'predict_from_history' record.id %}" class="text-decoration-none">
+                    <div class="d-flex justify-content-center align-items-center rounded-2 bg-light p-2"
+                         style="width: 150px; height: 120px; flex: 0 0 auto; margin-right: 10px;">
+                        
+                        {% if record.prediction.file_type == "image" %}
+                            <img src="{{ MEDIA_URL }}{{ record.prediction.file }}" 
+                                 class="w-100 h-100 rounded-2" style="object-fit: cover;">
+                        {% elif record.prediction.file_type == "video" %}
+                            <video id="history-video" src="{{ MEDIA_URL }}{{ record.prediction.file }}" 
+                                   class="w-100 h-100 rounded-2" 
+                                   style="object-fit: contain;" onmouseover="showControls()" onmouseleave="hideControls()">
+                            </video>
+                        {% endif %}
+                    </div>
+                </a>
+            {% endfor %}
+        </div>
+    </div>    
+</div>
+{% endblock %}

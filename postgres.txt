@@ -1,0 +1,35 @@
+cd "E:\Program Files\PostgreSQL\bin"
+psql -U postgres
+password:Faux-Vision
+list databases: \l
+to connect to db: \c fauxvision
+to see list of tables: \dt
+to see a table: \d table_name
+to see rows of a table: SELECT * FROM table_name;
+
+ CREATE TABLE users (
+    user_id SERIAL PRIMARY KEY,
+    firebase_id VARCHAR(100) UNIQUE NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    username VARCHAR(50) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE prediction (
+    detection_id SERIAL PRIMARY KEY,
+    user_id INT REFERENCES users(user_id) ON DELETE CASCADE,
+    file_path VARCHAR(255) NOT NULL,
+    file_type VARCHAR(50) NOT NULL,
+    prediction BOOLEAN NOT NULL,
+    confidence_score FLOAT NOT NULL,
+    detection_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    grad_cam_path VARCHAR(255)
+);
+
+CREATE TABLE history (
+    id SERIAL PRIMARY KEY,
+    user_id INT REFERENCES users(user_id) ON DELETE CASCADE,
+    prediction_id INT REFERENCES prediction(detection_id) ON DELETE CASCADE,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
